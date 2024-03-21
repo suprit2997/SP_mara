@@ -36,7 +36,6 @@ namespace BusinessCentralConnector
             _httpClient = new HttpClient();
             // call the Initialize method
             Initialize(clientId, clientSecret).Wait();
-
         }
 
         // Refactor the Conconstructor and create an initialize method to call the GetAccessToken method
@@ -85,18 +84,15 @@ namespace BusinessCentralConnector
             {
                 dataTable.Columns.Add(column.Key, column.Value);
             }
+
             // Retrieve data from the specified URL and add it to the DataTable.
             while (!string.IsNullOrEmpty(url))
             {
                 var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
-
-                // Rest of the code...
                 var jObject = JObject.Parse(content);
 
-                // Extract the data from the response and add it to the DataTable.
-                // check that jObject is not null
                 foreach (var item in jObject["value"].Children())
                 {
                     var row = dataTable.NewRow();
@@ -115,34 +111,30 @@ namespace BusinessCentralConnector
             return dataTable;
         }
 
+
+
         /// <summary>
         /// Get JSON data from the specified URL and returns it as a string.
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task<string> GetDataAsync(string? url, KeyValuePair<string, string> customHeader, string filterExpression)
+        public async Task<string> GetDataAsync(string? url,KeyValuePair<string,string> customHeader)
         {
-            if (customHeader.Key != null && customHeader.Value != null)
-            {
+            if (customHeader.Key != null && customHeader.Value != null) {
                 if (_httpClient.DefaultRequestHeaders.Contains(customHeader.Key))
                     _httpClient.DefaultRequestHeaders.Remove(customHeader.Key);
                 _httpClient.DefaultRequestHeaders.Add(customHeader.Key, customHeader.Value);
             }
 
+
             var rawOutput = new StringBuilder();
-            // Retrieve data from the specified URL and add it to the DataTable.
+           // Retrieve data from the specified URL and add it to the DataTable.
             while (!string.IsNullOrEmpty(url))
             {
                 string content = string.Empty;
                 try
                 {
-                    Console.WriteLine("filter = " + filterExpression);
-                    var requestUrl = $"{url}?{filterExpression}";
-                    Console.WriteLine("Getting Data From = " + requestUrl);
-                    Console.WriteLine("Getting Data From = " + url);
-                    var response = await _httpClient.GetAsync(requestUrl);
-
-                    //var response = await _httpClient.GetAsync(url);
+                    var response = await _httpClient.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     content = await response.Content.ReadAsStringAsync();
                 }
@@ -152,17 +144,15 @@ namespace BusinessCentralConnector
                     throw;
                 }
 
-                // Append content to rawOutput if needed
+                // check that jObject is not null
                 rawOutput.Append(content);
-
                 var jObject = JObject.Parse(content);
-                //Console.WriteLine(jObject.ToString());
+               Console.WriteLine(jObject.ToString());
                 url = jObject["@odata.nextLink"]?.ToString();
             }
 
             return rawOutput.ToString();
         }
-
         
         /// <summary>
         /// Disposes the underlying HttpClient instance.
